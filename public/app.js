@@ -1,23 +1,23 @@
 const API = window.location.origin;
 
 function getSession() {
-  const token = localStorage.getItem('token');
-  const name = localStorage.getItem('name');
-  const role = localStorage.getItem('role');
+  const token = sessionStorage.getItem('token');
+  const name = sessionStorage.getItem('name');
+  const role = sessionStorage.getItem('role');
   if (!token) return null;
   return { token, name, role };
 }
 
 function setSession(data) {
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('name', data.name);
-  localStorage.setItem('role', data.role);
+  sessionStorage.setItem('token', data.token);
+  sessionStorage.setItem('name', data.name);
+  sessionStorage.setItem('role', data.role);
 }
 
 function clearSession() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('name');
-  localStorage.removeItem('role');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('name');
+  sessionStorage.removeItem('role');
 }
 
 function authHeaders() {
