@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hangr</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Hangr</div>
+  <div class="topnav">
+    <span id="who" class="tag hidden"></span>
+    <a href="#" id="logout-link" class="hidden" onclick="logout();return false;">Log out</a>
+  </div>
+</header>
+
+<main>
+  <!-- LOGIN -->
+  <div id="s-login" class="card">
+    <h1>Enter your password</h1>
+    <p class="hint">One password gets you in — master or poster.</p>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="doLogin()">Enter</button>
+    <div class="error" id="login-err"></div>
+  </div>
+
+  <!-- MASTER VIEW -->
+  <div id="s-master" class="hidden">
+    <div class="chip-row" id="range-chips">
+      <button class="chip active" data-range="all" onclick="setRange('all')">All time</button>
+      <button class="chip" data-range="today" onclick="setRange('today')">Today</button>
+      <button class="chip" data-range="7d" onclick="setRange('7d')">7 days</button>
+      <button class="chip" data-range="30d" onclick="setRange('30d')">30 days</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="st-posters">—</div><div class="stat-lbl">Total Posters</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-links">—</div><div class="stat-lbl">Links (range)</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-today">—</div><div class="stat-lbl">Links Today</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-active">—</div><div class="stat-lbl">Active Posters</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-hd">
+        <div class="section-title">Posters</div>
+        <button class="btn-sm" onclick="toggleCreateForm()">+ Create</button>
+      </div>
+      <div class="row hidden" id="create-form">
+        <div class="field">
+          <label for="new-name">Name</label>
+          <input type="text" id="new-name" placeholder="For your reference only">
+        </div>
+        <div class="field">
+          <label for="new-password">Password (optional)</label>
+          <input type="text" id="new-password" placeholder="Leave blank to auto-generate">
+        </div>
+        <button class="btn-primary" onclick="createPoster()">Create</button>
+      </div>
+      <div class="error" id="create-err"></div>
+      <div class="cred-box hidden" id="create-ok"></div>
+      <div id="poster-list"><div class="empty">Loading...</div></div>
+    </div>
+
+
+    <div class="card">
+      <div class="section-hd">
+        <div class="section-title">Posting Calendar</div>
+      </div>
+      <p class="hint">Only visible to master. Number of links each poster submitted per day.</p>
+      <div class="filter-row">
+        <div class="field">
+          <label for="g-from">From</label>
+          <input type="date" id="g-from">
+        </div>
+        <div class="field">
+          <label for="g-to">To</label>
+          <input type="date" id="g-to">
+        </div>
+        <button class="btn-sm" onclick="loadGrid()">Apply</button>
+      </div>
+      <div class="grid-wrap" id="grid-wrap"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- DAY LINKS MODAL -->
+  <div id="day-modal" class="modal-overlay hidden" onclick="if(event.target===this) closeDayModal()">
+    <div class="modal-box">
+      <div class="section-hd">
+        <div class="section-title" id="day-modal-title">Links</div>
+        <button class="btn-ghost" style="font-size:.78rem;padding:6px 12px" onclick="closeDayModal()">Close</button>
+      </div>
+      <div id="day-modal-list"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- POSTER VIEW -->
+  <div id="s-poster" class="hidden">
+    <div class="card">
+      <div class="quota-hero" id="quota-hero">
+        <div class="quota-num"><span id="quota-count">—</span><span class="quota-sep">/</span><span id="quota-total">—</span></div>
+        <div class="quota-label">links submitted today</div>
+        <div class="quota-bar"><div class="quota-bar-fill" id="quota-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Submit a link</h2>
+      <div class="platform-row" id="platform-row">
+        <button class="platform-btn" data-platform="youtube" onclick="selectPlatform('youtube')">
+          <span class="platform-icon youtube">▶️</span> YouTube
+        </button>
+        <button class="platform-btn" data-platform="tiktok" onclick="selectPlatform('tiktok')">
+          <span class="platform-icon tiktok">♪</span> TikTok
+        </button>
+        <button class="platform-btn" data-platform="instagram" onclick="selectPlatform('instagram')">
+          <span class="platform-icon instagram">📷</span> Instagram
+        </button>
+        <button class="platform-btn" data-platform="snapchat" onclick="selectPlatform('snapchat')">
+          <span class="platform-icon snapchat">👻</span> Snapchat
+        </button>
+      </div>
+      <div class="field">
+        <label for="link-url">Link URL</label>
+        <input type="url" id="link-url" placeholder="https://...">
+      </div>
+      <button class="btn-primary" onclick="submitLink()">Submit</button>
+      <div class="error" id="submit-err"></div>
+      <div class="success" id="submit-ok">Link submitted.</div>
+    </div>
+
+    <div class="card">
+      <h2>Your submissions</h2>
+      <div id="my-links"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+</main>
+
+<script src="app.js"></script>
+<script>
+function showScreen(id) {
+  ['s-login', 's-master', 's-poster'].forEach(s => document.getElementById(s).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function enterAs(session) {
+  document.getElementById('who').textContent = session.role === 'master' ? 'Master' : session.name;
+  document.getElementById('who').classList.remove('hidden');
+  document.getElementById('logout-link').classList.remove('hidden');
+  if (session.role === 'master') {
+    showScreen('s-master');
+    loadStats();
+    loadPosters();
+    initGridDates();
+    loadGrid();
+  } else {
+    showScreen('s-poster');
+    loadMyLinks();
+  }
+}
+
+const existing = getSession();
+if (existing) enterAs(existing);
+
+async function doLogin() {
+  const password = document.getElementById('password').value;
+  const err = document.getElementById('login-err');
+  err.style.display = 'none';
+  if (!password) { err.textContent = 'Enter a password.'; err.style.display = 'block'; return; }
+  try {
+    const d = await apiFetch('/api/login', { method: 'POST', body: JSON.stringify({ password }) });
+    setSession(d);
+    document.getElementById('password').value = '';
+    enterAs(d);
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+  }
+}
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function logout() {
+  clearSession();
+  document.getElementById('who').classList.add('hidden');
+  document.getElementById('logout-link').classList.add('hidden');
+  showScreen('s-login');
+}
+
+/* ---- master ---- */
+let currentRange = 'all';
+
+function setRange(range) {
+  currentRange = range;
+  document.querySelectorAll('#range-chips .chip').forEach(c => c.classList.toggle('active', c.dataset.range === range));
+  loadStats();
+}
+
+async function loadStats() {
+  try {
+    const d = await apiFetch(`/api/master/stats?range=${currentRange}`);
+    document.getElementById('st-posters').textContent = d.totalPosters;
+    document.getElementById('st-links').textContent = d.totalLinks;
+    document.getElementById('st-today').textContent = d.linksToday;
+    document.getElementById('st-active').textContent = d.activePosters;
+  } catch (e) {}
+}
+
+function toggleCreateForm() {
+  document.getElementById('create-form').classList.toggle('hidden');
+}
+
+async function loadPosters() {
+  const el = document.getElementById('poster-list');
+  try {
+    const d = await apiFetch('/api/master/posters');
+    if (!d.posters.length) { el.innerHTML = '<div class="empty">No posters yet.</div>'; return; }
+    el.innerHTML = d.posters.map(p => `
+      <div class="poster-row">
+        <div>
+          <div class="poster-name">${escapeHtml(p.name)}</div>
+          <div class="poster-sub">
+            Password:
+            <strong class="pw-mask" style="font-family:ui-monospace,monospace;color:var(--text)" data-pw="${escapeHtml(p.password || '')}">${'•'.repeat((p.password || '').length) || '—'}</strong>
+            <button class="btn-ghost" style="font-size:.68rem;padding:2px 8px;margin-left:4px" onclick="togglePw(this)">👁</button>
+          </div>
+          <div class="poster-sub">${p.link_count} link${p.link_count === 1 ? '' : 's'} · added ${timeAgo(p.created_at)}</div>
+          <div class="poster-sub" style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span>Daily quota:</span>
+            <input type="number" min="0" value="${p.daily_quota}" id="quota-${p.id}" style="width:56px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:.8rem;font-family:inherit">
+            <button class="btn-ghost" style="font-size:.68rem;padding:4px 10px" onclick="saveQuota(${p.id})">Save</button>
+            <span style="color:var(--sub)">${p.today_count}/${p.daily_quota} today</span>
+          </div>
+        </div>
+        <div class="poster-actions">
+          <button class="btn-ghost" style="font-size:.78rem;padding:6px 12px" onclick="resetPassword(${p.id}, '${escapeHtml(p.name)}')">New password</button>
+          <button class="btn-danger" onclick="deletePoster(${p.id}, '${escapeHtml(p.name)}')">Delete</button>
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="empty">Could not load posters.</div>';
+  }
+}
+
+async function createPoster() {
+  const name = document.getElementById('new-name').value.trim();
+  const password = document.getElementById('new-password').value.trim();
+  const err = document.getElementById('create-err');
+  const ok = document.getElementById('create-ok');
+  err.style.display = 'none'; ok.classList.add('hidden');
+  try {
+    const d = await apiFetch('/api/master/posters', { method: 'POST', body: JSON.stringify({ name, password: password || undefined }) });
+    ok.innerHTML = `Password for <strong>${escapeHtml(d.name)}</strong>: <strong>${escapeHtml(d.password)}</strong> — copy it now, it won't be shown again.`;
+    ok.classList.remove('hidden');
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-password').value = '';
+    loadPosters();
+    loadStats();
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+  }
+}
+
+async function saveQuota(id) {
+  const input = document.getElementById(`quota-${id}`);
+  const quota = parseInt(input.value, 10);
+  if (isNaN(quota) || quota < 0) return;
+  try {
+    await apiFetch(`/api/master/posters/${id}/quota`, { method: 'POST', body: JSON.stringify({ quota }) });
+    loadPosters();
+  } catch (e) { alert(e.message); }
+}
+
+function togglePw(btn) {
+  const strong = btn.previousElementSibling;
+  const pw = strong.dataset.pw;
+  if (!pw) return;
+  const shown = strong.dataset.shown === '1';
+  strong.textContent = shown ? '•'.repeat(pw.length) : pw;
+  strong.dataset.shown = shown ? '0' : '1';
+}
+
+async function deletePoster(id, name) {
+  if (!confirm(`Delete "${name}"? Their links stay in the log.`)) return;
+  try { await apiFetch(`/api/master/posters/${id}`, { method: 'DELETE' }); loadPosters(); loadStats(); } catch (e) { alert(e.message); }
+}
+
+async function resetPassword(id, name) {
+  const custom = prompt(`New password for "${name}"? Leave blank to auto-generate. Their old password will stop working.`);
+  if (custom === null) return;
+  try {
+    const d = await apiFetch(`/api/master/posters/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ password: custom.trim() || undefined }) });
+    alert(`New password for ${name}: ${d.password}`);
+  } catch (e) { alert(e.message); }
+}
+
+function initGridDates() {
+  const to = new Date();
+  const from = new Date(Date.now() - 13 * 86400000);
+  document.getElementById('g-to').value = to.toISOString().slice(0, 10);
+  document.getElementById('g-from').value = from.toISOString().slice(0, 10);
+}
+
+async function loadGrid() {
+  const el = document.getElementById('grid-wrap');
+  const from = document.getElementById('g-from').value;
+  const to = document.getElementById('g-to').value;
+  const qs = new URLSearchParams();
+  if (from) qs.set('from', from);
+  if (to) qs.set('to', to);
+  try {
+    const d = await apiFetch(`/api/master/grid?${qs.toString()}`);
+    if (!d.posters.length) { el.innerHTML = '<div class="empty">No posters yet.</div>'; return; }
+    d.dates.reverse();
+    const dayLabel = ds => {
+      const dt = new Date(ds + 'T00:00:00Z');
+      return `${dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })}<br>${dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}`;
+    };
+    let html = '<table class="grid-table"><thead><tr><th>Name</th>' +
+      d.dates.map(ds => `<th>${dayLabel(ds)}</th>`).join('') + '</tr></thead><tbody>';
+    html += d.posters.map(p => `<tr><td>${escapeHtml(p.name)}</td>` +
+      d.dates.map(ds => {
+        const c = p.counts[ds] || 0;
+        return c
+          ? `<td class="grid-cell-hit" onclick="showDayLinks(${p.id}, '${escapeHtml(p.name)}', '${ds}')">${c}</td>`
+          : `<td class="grid-cell-miss">—</td>`;
+      }).join('') + '</tr>').join('');
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div class="empty">Could not load calendar.</div>';
+  }
+}
+
+async function showDayLinks(posterId, posterName, date) {
+  const modal = document.getElementById('day-modal');
+  const title = document.getElementById('day-modal-title');
+  const list = document.getElementById('day-modal-list');
+  const dt = new Date(date + 'T00:00:00Z');
+  title.textContent = `${posterName} · ${dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}`;
+  list.innerHTML = '<div class="empty">Loading...</div>';
+  modal.classList.remove('hidden');
+  try {
+    const qs = new URLSearchParams({ poster: posterId, from: date, to: date });
+    const d = await apiFetch(`/api/master/links?${qs.toString()}`);
+    if (!d.links.length) { list.innerHTML = '<div class="empty">No links that day.</div>'; return; }
+    list.innerHTML = d.links.map(l => `
+      <div class="link-item">
+        <div class="meta">${timeAgo(l.created_at)}</div>
+        <div style="margin:4px 0">${platformChip(l.platform)}</div>
+        <a class="url" href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.url)}</a>
+      </div>`).join('');
+  } catch (e) {
+    list.innerHTML = '<div class="empty">Could not load links.</div>';
+  }
+}
+
+function closeDayModal() {
+  document.getElementById('day-modal').classList.add('hidden');
+}
+
+/* ---- poster ---- */
+const PLATFORM_META = {
+  youtube: { label: 'YouTube', icon: '▶️', cls: 'youtube' },
+  tiktok: { label: 'TikTok', icon: '♪', cls: 'tiktok' },
+  instagram: { label: 'Instagram', icon: '📷', cls: 'instagram' },
+  snapchat: { label: 'Snapchat', icon: '👻', cls: 'snapchat' },
+};
+function platformChip(key) {
+  const m = PLATFORM_META[key];
+  if (!m) return '';
+  return `<span class="platform-chip"><span class="platform-icon ${m.cls}">${m.icon}</span>${m.label}</span>`;
+}
+
+let selectedPlatform = null;
+function selectPlatform(p) {
+  selectedPlatform = p;
+  document.querySelectorAll('#platform-row .platform-btn').forEach(b => b.classList.toggle('active', b.dataset.platform === p));
+}
+
+async function submitLink() {
+  const url = document.getElementById('link-url').value.trim();
+  const err = document.getElementById('submit-err');
+  const ok = document.getElementById('submit-ok');
+  err.style.display = 'none'; ok.style.display = 'none';
+  if (!selectedPlatform) { err.textContent = 'Pick which app this link is from.'; err.style.display = 'block'; return; }
+  try {
+    await apiFetch('/api/poster/links', { method: 'POST', body: JSON.stringify({ url, platform: selectedPlatform }) });
+    ok.style.display = 'block';
+    document.getElementById('link-url').value = '';
+    loadMyLinks();
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+  }
+}
+
+async function loadMyLinks() {
+  const el = document.getElementById('my-links');
+  try {
+    const d = await apiFetch('/api/poster/links');
+    document.getElementById('quota-count').textContent = d.todayCount;
+    document.getElementById('quota-total').textContent = d.quota;
+    const pct = d.quota > 0 ? Math.min(100, Math.round((d.todayCount / d.quota) * 100)) : 100;
+    document.getElementById('quota-fill').style.width = pct + '%';
+    document.getElementById('quota-hero').classList.toggle('done', d.todayCount >= d.quota && d.quota > 0);
+    if (!d.links.length) { el.innerHTML = '<div class="empty">You haven\'t submitted any links yet.</div>'; return; }
+    el.innerHTML = d.links.map(l => `
+      <div class="link-item">
+        <div class="meta">${timeAgo(l.created_at)}</div>
+        <div style="margin:4px 0">${platformChip(l.platform)}</div>
+        <a class="url" href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.url)}</a>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="empty">Could not load your links.</div>';
+  }
+}
+</script>
+</body>
+</html>
