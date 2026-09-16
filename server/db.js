@@ -43,11 +43,16 @@ if (!userCols.includes('daily_quota')) {
 
 function seedMaster() {
   const password = process.env.MASTER_PASSWORD || 'changeme123';
-  const existing = db.prepare("SELECT id FROM users WHERE role = 'master'").get();
+  const existing = db.prepare("SELECT id, password_hash FROM users WHERE role = 'master'").get();
   if (!existing) {
     const hash = bcrypt.hashSync(password, 10);
     db.prepare('INSERT INTO users (name, password_hash, role) VALUES (?, ?, ?)').run('Master', hash, 'master');
     console.log(`[seed] master password: ${password} (set MASTER_PASSWORD env var to change it)`);
+  } else if (!bcrypt.compareSync(password, existing.password_hash)) {
+    // MASTER_PASSWORD env var changed since last boot — sync it into the DB
+    const hash = bcrypt.hashSync(password, 10);
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, existing.id);
+    console.log('[seed] master password updated from MASTER_PASSWORD env var');
   }
 }
 seedMaster();
